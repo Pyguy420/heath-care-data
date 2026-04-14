@@ -12,11 +12,9 @@
 
 ---
 
-## Project Overview
+I wanted to answer a question I kept seeing come up in healthcare strategy work: which hospitals and conditions are actually driving poor readmission performance, and where are the biggest gaps between what's expected and what's happening?
 
-I wanted to answer a straightforward question: which hospitals, states, and conditions are driving the worst 30-day readmission rates in the U.S.?
-
-I pulled real CMS data, wrote a Python ETL script to clean and load 18,330 records into a normalized MySQL database, ran five analytical queries to find the patterns, and built a Power BI dashboard to present the findings. The whole pipeline — data to dashboard — is in this repo.
+The data came from CMS's Hospital Readmissions Reduction Program — 18,330 records across 3,055 facilities. I cleaned it, loaded it into MySQL, wrote the queries, and built the dashboard. Everything is in this repo.
 
 ---
 
@@ -39,7 +37,7 @@ healthcare-readmissions-analytics/
 
 ## Database Schema
 
-The CMS file came as one flat structure. I split it into 3 normalized tables:
+The CMS file came as one flat structure so I split it into 3 tables. Nothing fancy, just clean normalization so the queries would actually be readable.
 
 ```sql
 hospitals (
@@ -65,15 +63,13 @@ readmissions (
 )
 ```
 
-**3,055 hospitals · 6 conditions · 18,330 readmission records**
+3,055 hospitals · 6 conditions · 18,330 records
 
 ---
 
 ## ETL Pipeline
 
-The raw file had issues — `N/A`, `Too Few to Report`, and inconsistent numeric types scattered throughout. `load_data.py` handles all of that. It parses the `.numbers` format, coerces the columns, splits everything into the 3 tables, and loads it into MySQL with foreign keys intact.
-
-Not the prettiest data to work with, but that's usually how it goes with real datasets.
+The raw file was a `.numbers` format with `N/A`, `Too Few to Report`, and `NaN` values mixed throughout the numeric columns. Took some work to get it loading cleanly. `load_data.py` handles the parsing, coercion, and insert logic — splits the flat file into the 3 tables and loads with foreign key constraints intact.
 
 ```bash
 pip install numbers-parser mysql-connector-python pandas
@@ -84,31 +80,31 @@ python load_data.py
 
 ## SQL Analysis
 
-### Q1 — Top 10 States by Excess Readmission Ratio
-Which states carry the highest readmission burden across their hospital networks?  
-**Finding:** Massachusetts, New Jersey, and Florida rank highest. MA was noticeably ahead of the rest.
+**Q1 — Top 10 States by Excess Readmission Ratio**
 
-### Q2 — Readmissions by Condition
-How do volumes and excess ratios compare across the 6 tracked conditions?  
-**Finding:** Heart Failure runs away with it — 392K+ readmissions, nearly 3x Pneumonia which came in second at 131K. Every other condition wasn't close.
+MA came in noticeably ahead of everyone else. NJ and FL followed. The gap between MA and the rest of the top 10 was wider than I expected going in.
 
-### Q3 — Hospital Performance vs. National Average
-How does the overall hospital population split against the national benchmark?  
-**Finding:** 69% perform better than average on paper. But nearly half of total readmission volume still comes from underperformers — so the headline number is a bit misleading.
+**Q2 — Readmissions by Condition**
 
-### Q4 — Highest Risk Hospitals
-Which facilities have the worst average excess readmission ratios?  
-**Finding:** Surgical specialty hospitals show up disproportionately. That's probably worth a deeper look — narrow condition tracking against a broad national benchmark might be skewing the numbers.
+Heart Failure at 392K+ — nearly 3x Pneumonia which came in second at 131K. The other four conditions weren't really in the same conversation volume-wise, though Hip/Knee and CABG had higher excess ratios than their volume suggested.
 
-### Q5 — Predicted vs. Expected Rate Gap by State & Condition
-Where does actual performance diverge most from what the model expects?  
-**Finding:** Wyoming CABG and Massachusetts AMI have the largest gaps nationally. Honestly not sure what's driving Wyoming specifically — it stood out enough to flag.
+**Q3 — Hospital Performance vs. National Average**
+
+69% of hospitals perform better than the national average which sounds good until you look at where the actual readmission volume is coming from. The headline number is a little misleading.
+
+**Q4 — Highest Risk Hospitals**
+
+Surgical specialty hospitals keep showing up at the top. My read is that narrow condition tracking against a broad national benchmark is probably inflating their ratios — but I didn't dig deep enough into that to say for certain.
+
+**Q5 — Predicted vs. Expected Rate Gap**
+
+Wyoming CABG has the largest gap nationally. I don't have a clean explanation for that one.
 
 ---
 
 ## Power BI Dashboard
 
-Connects directly to MySQL via MySQL Connector/NET. Built for a strategy audience — the goal was clarity over complexity.
+Connects to MySQL directly via MySQL Connector/NET. Four visuals plus KPI cards — built to give a strategy audience the key facts without making them dig for it.
 
 | Visual | Description |
 |---|---|
@@ -118,26 +114,9 @@ Connects directly to MySQL via MySQL Connector/NET. Built for a strategy audienc
 | Donut Chart | Hospital performance vs. national average |
 | Table | Top 10 highest risk hospitals |
 
-**DAX Calculated Column:**
 ```dax
 Performance Category = 
 IF(readmissions[excess_readmission_ratio] < 1, "Better Than National",
 IF(readmissions[excess_readmission_ratio] > 1, "Worse Than National",
 "Same As National"))
 ```
-
----
-
-## Key Findings
-
-- **MA, NJ, and FL** have the highest average excess readmission ratios in the country
-- **Heart Failure** is the dominant condition — 392K+ readmissions and it's not close
-- **Nearly half of all hospitals** perform worse than the national benchmark despite the overall rate looking favorable
-- **Surgical specialty hospitals** keep showing up at the top of the risk list — the benchmark comparison may need more nuance here
-- **Wyoming CABG** has the largest predicted vs. expected rate gap nationally — flagged but needs more investigation
-
----
-
-## Skills Demonstrated
-
-`Python` · `ETL Pipeline` · `MySQL` · `Relational Schema Design` · `Multi-table JOINs` · `CASE WHEN` · `Aggregations` · `Power BI` · `DAX` · `Healthcare Analytics` · `CMS Data`
