@@ -12,15 +12,30 @@
 
 ---
 
+# Healthcare Quality & Readmissions Analytics
+
+**Author:** Ahmed Isse
+**Stack:** Python · MySQL · Power BI
+**Data Source:** CMS Hospital Readmissions Reduction Program (HRRP) — FY 2026
+
+---
+
+## Dashboard Preview
+
+![Healthcare Quality & Readmissions Report](dashboard_preview.png)
+
+---
+
 ## Project Overview
 
-End-to-end healthcare analytics pipeline built on real CMS data. A Python ETL script ingests and normalizes 18,330 hospital readmission records into a MySQL database across 3 relational tables. Five analytical SQL queries surface key insights, which are then visualized in a Power BI dashboard designed for healthcare strategy stakeholders.
+I wanted to answer a straightforward question: which hospitals, states, and conditions are driving the worst 30-day readmission rates in the U.S.?
 
-**Business Question:** Which hospitals, states, and conditions have the worst 30-day readmission rates — and what patterns exist across the national dataset?
+I pulled real CMS data, wrote a Python ETL script to clean and load 18,330 records into a normalized MySQL database, ran five analytical queries to find the patterns, and built a Power BI dashboard to present the findings. The whole pipeline — data to dashboard — is in this repo.
 
 ---
 
 ## Repository Structure
+
 
 ```
 healthcare-readmissions-analytics/
