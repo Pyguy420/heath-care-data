@@ -1,5 +1,3 @@
----
-
 # Healthcare Quality & Readmissions Analytics
 
 **Author:** Ahmed Isse
@@ -24,7 +22,6 @@ I pulled real CMS data, wrote a Python ETL script to clean and load 18,330 recor
 
 ## Repository Structure
 
-
 ```
 healthcare-readmissions-analytics/
 ├── load_data.py                  # Python ETL — loads CMS data into MySQL
@@ -37,11 +34,12 @@ healthcare-readmissions-analytics/
 ├── dashboard_preview.png         # Power BI dashboard screenshot
 └── README.md
 ```
+
 ---
 
 ## Database Schema
 
-Three normalized tables with foreign key constraints:
+The CMS file came as one flat structure. I split it into 3 normalized tables:
 
 ```sql
 hospitals (
@@ -67,18 +65,15 @@ readmissions (
 )
 ```
 
-**Data volume:** 3,055 hospitals · 6 conditions · 18,330 readmission records
+**3,055 hospitals · 6 conditions · 18,330 readmission records**
 
 ---
 
 ## ETL Pipeline
 
-`load_data.py` handles the full ingestion workflow:
+The raw file had issues — `N/A`, `Too Few to Report`, and inconsistent numeric types scattered throughout. `load_data.py` handles all of that. It parses the `.numbers` format, coerces the columns, splits everything into the 3 tables, and loads it into MySQL with foreign keys intact.
 
-1. Parses the raw CMS `.numbers` file using `numbers-parser`
-2. Cleans and coerces numeric fields — handles `N/A`, `Too Few to Report`, and `NaN` values
-3. Splits the flat file into 3 normalized tables
-4. Loads into MySQL via `mysql-connector-python` with foreign key integrity
+Not the prettiest data to work with, but that's usually how it goes with real datasets.
 
 ```bash
 pip install numbers-parser mysql-connector-python pandas
@@ -90,30 +85,30 @@ python load_data.py
 ## SQL Analysis
 
 ### Q1 — Top 10 States by Excess Readmission Ratio
-Identifies which states have the highest average readmission burden across all facilities.  
-**Finding:** Massachusetts, New Jersey, and Florida rank highest nationally.
+Which states carry the highest readmission burden across their hospital networks?  
+**Finding:** Massachusetts, New Jersey, and Florida rank highest. MA was noticeably ahead of the rest.
 
 ### Q2 — Readmissions by Condition
-Aggregates total readmissions and average excess ratio by clinical condition.  
-**Finding:** Heart Failure drives the most readmissions at 392K+, followed by Pneumonia at 131K.
+How do volumes and excess ratios compare across the 6 tracked conditions?  
+**Finding:** Heart Failure runs away with it — 392K+ readmissions, nearly 3x Pneumonia which came in second at 131K. Every other condition wasn't close.
 
 ### Q3 — Hospital Performance vs. National Average
-Uses CASE WHEN logic to categorize each hospital as better, worse, or same as national benchmark.  
-**Finding:** 69% of hospitals perform better than the national average.
+How does the overall hospital population split against the national benchmark?  
+**Finding:** 69% perform better than average on paper. But nearly half of total readmission volume still comes from underperformers — so the headline number is a bit misleading.
 
 ### Q4 — Highest Risk Hospitals
-Ranks hospitals by average excess readmission ratio across all tracked conditions.  
-**Finding:** Surgical specialty hospitals dominate the top 10 highest-risk list.
+Which facilities have the worst average excess readmission ratios?  
+**Finding:** Surgical specialty hospitals show up disproportionately. That's probably worth a deeper look — narrow condition tracking against a broad national benchmark might be skewing the numbers.
 
 ### Q5 — Predicted vs. Expected Rate Gap by State & Condition
-Surfaces where actual performance diverges most from model expectations.  
-**Finding:** Wyoming CABG and Massachusetts AMI show the largest rate gaps.
+Where does actual performance diverge most from what the model expects?  
+**Finding:** Wyoming CABG and Massachusetts AMI have the largest gaps nationally. Honestly not sure what's driving Wyoming specifically — it stood out enough to flag.
 
 ---
 
 ## Power BI Dashboard
 
-Connected directly to MySQL via MySQL Connector/NET.
+Connects directly to MySQL via MySQL Connector/NET. Built for a strategy audience — the goal was clarity over complexity.
 
 | Visual | Description |
 |---|---|
@@ -124,7 +119,6 @@ Connected directly to MySQL via MySQL Connector/NET.
 | Table | Top 10 highest risk hospitals |
 
 **DAX Calculated Column:**
-
 ```dax
 Performance Category = 
 IF(readmissions[excess_readmission_ratio] < 1, "Better Than National",
@@ -132,20 +126,18 @@ IF(readmissions[excess_readmission_ratio] > 1, "Worse Than National",
 "Same As National"))
 ```
 
-
 ---
 
 ## Key Findings
 
-- **MA, NJ, FL** have the highest average excess readmission ratios nationally
-- **Heart Failure** is the single largest driver of readmissions at 392K+
-- **48% of hospitals** perform worse than the national benchmark
-- **Surgical specialty hospitals** are disproportionately represented among highest-risk facilities
-- **Wyoming CABG** shows the largest gap between predicted and expected readmission rates
+- **MA, NJ, and FL** have the highest average excess readmission ratios in the country
+- **Heart Failure** is the dominant condition — 392K+ readmissions and it's not close
+- **Nearly half of all hospitals** perform worse than the national benchmark despite the overall rate looking favorable
+- **Surgical specialty hospitals** keep showing up at the top of the risk list — the benchmark comparison may need more nuance here
+- **Wyoming CABG** has the largest predicted vs. expected rate gap nationally — flagged but needs more investigation
 
 ---
 
+## Skills Demonstrated
 
-
-
-
+`Python` · `ETL Pipeline` · `MySQL` · `Relational Schema Design` · `Multi-table JOINs` · `CASE WHEN` · `Aggregations` · `Power BI` · `DAX` · `Healthcare Analytics` · `CMS Data`
